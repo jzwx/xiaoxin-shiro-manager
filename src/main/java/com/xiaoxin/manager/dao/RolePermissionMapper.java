@@ -31,4 +31,8 @@ public interface RolePermissionMapper {
      * @mbggenerated
      */
     List<RolePermission> selectAll();
+
+    List<RolePermission> findByRole(int roleId);
+
+    int deleteByPrimary(RolePermission key);
 }

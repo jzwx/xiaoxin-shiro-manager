@@ -1,7 +1,11 @@
 package com.xiaoxin.manager.dao;
 
+import com.xiaoxin.manager.entity.UserRoleDTO;
+import com.xiaoxin.manager.entity.UserRolesVO;
+import com.xiaoxin.manager.entity.UserSearchDTO;
 import com.xiaoxin.manager.pojo.User;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -53,4 +57,44 @@ public interface UserMapper {
      * @return
      */
     User findUserByUsername(String username);
+
+    /**
+     * 分页查询用户数据
+     * @return
+     */
+    List<UserRoleDTO> getUsers(@Param("userSearch") UserSearchDTO userSearch);
+
+    /**
+     * 查询用户及对应的角色
+     * @param id
+     * @return
+     */
+    UserRolesVO getUserAndRoles(Integer id);
+
+    /**
+     *	根据手机号获取用户数据
+     * @param mobile
+     * @return
+     */
+    User findUserByMobile(String mobile);
+
+    int updateByPrimaryKeySelective(User record);
+
+    /**
+     * 设置用户是否离职
+     * @param id
+     * @param isJob
+     * @return
+     */
+    int setJobUser(@Param("id") Integer id, @Param("isJob") Integer isJob,
+                   @Param("insertUid") Integer insertUid);
+
+    /**
+     * 删除用户
+     * @param id
+     * @param isDel
+     * @return
+     */
+    int setDelUser(@Param("id") Integer id, @Param("isDel") Integer isDel,
+                   @Param("insertUid") Integer insertUid);
 }

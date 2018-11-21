@@ -14,6 +14,10 @@
         <result column="insert_time" property="insertTime" jdbcType="TIMESTAMP"/>
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
+    <sql id="Base_Column_List" >
+        id, role_name, descpt, code, insert_uid, insert_time, update_time
+    </sql>
+
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         <!--
           WARNING - @mbggenerated
@@ -78,4 +82,68 @@
     WHERE ur.user_id=#{userId}
     </select>
     <!--=End getRoleByUserId 根据用户id查询角色数据-->
+
+    <!--=Start getRoles 查询角色列表-->
+    <select id="getRoles" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from role
+    </select>
+    <!--=End getRoles 查询角色列表-->
+
+    <!--=Start findList 分页查询角色列表-->
+    <select id="findList" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from role
+    </select>
+    <!--=End findList 分页查询角色列表-->
+
+    <!--=Start findRoleAndPerms 查询角色列表-->
+    <resultMap id="rolePerms" type="com.xiaoxin.manager.entity.RoleVO" >
+        <id column="id" property="id" />
+        <result column="role_name" property="roleName"/>
+        <result column="code" property="code"/>
+        <result column="descpt" property="descpt"/>
+        <result column="insert_uid" property="insertUid"/>
+        <result column="insert_time" property="insertTime"/>
+        <collection property="rolePerms" ofType="com.xiaoxin.manager.pojo.RolePermission">
+            <result  column="role_id" property="roleId"/>
+            <result column="permit_id" property="permitId"/>
+        </collection>
+    </resultMap>
+
+    <select id="findRoleAndPerms" resultMap="rolePerms">
+        select
+        r.*,rp.role_id,rp.permit_id
+        from role r
+        INNER JOIN role_permission rp ON r.id=rp.role_id
+        WHERE r.id=#{id}
+    </select>
+    <!--=End findRoleAndPerms 查询角色列表-->
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.xiaoxin.manager.pojo.Role" >
+        update role
+        <set >
+            <if test="roleName != null" >
+                role_name = #{roleName,jdbcType=VARCHAR},
+            </if>
+            <if test="descpt != null" >
+                descpt = #{descpt,jdbcType=VARCHAR},
+            </if>
+            <if test="code != null" >
+                code = #{code,jdbcType=VARCHAR},
+            </if>
+            <if test="insertUid != null" >
+                insert_uid = #{insertUid,jdbcType=INTEGER},
+            </if>
+            <if test="insertTime != null" >
+                insert_time = #{insertTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null" >
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
 </mapper>

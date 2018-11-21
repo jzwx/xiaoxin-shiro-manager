@@ -1,5 +1,6 @@
 package com.xiaoxin.manager.dao;
 
+import com.xiaoxin.manager.entity.PermissionVO;
 import com.xiaoxin.manager.pojo.Permission;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -53,4 +54,28 @@ public interface PermissionMapper {
      * @return
      */
     List<Permission> findPermsByRoleId(Integer roleId);
+
+    List<PermissionVO> getUserPerms(Integer userId);
+
+    /**
+     * 查询权限树列表
+     * @return
+     */
+    List<PermissionVO> findPerms();
+
+    /**
+     * 查找所有权限数据
+     * @return
+     */
+    List<Permission> findAll();
+
+    int updateByPrimaryKeySelective(Permission record);
+
+    /**
+     * 查找所有子节点
+     * @param pid
+     * @return
+     */
+    List<Permission> findChildPerm(int pid);
+
 }

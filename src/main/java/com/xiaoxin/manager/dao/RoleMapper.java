@@ -1,5 +1,6 @@
 package com.xiaoxin.manager.dao;
 
+import com.xiaoxin.manager.entity.RoleVO;
 import com.xiaoxin.manager.pojo.Role;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -53,4 +54,25 @@ public interface RoleMapper {
      * @return
      */
     List<Role> getRoleByUserId(Integer userId);
+
+    /**
+     * 获取所有角色权限信息
+     * @return
+     */
+    List<Role> getRoles();
+
+    /**
+     * 分页查询所有的角色列表
+     * @return
+     */
+    List<Role> findList();
+
+    /**
+     * 获取角色相关的数据
+     * @param id
+     * @return
+     */
+    RoleVO findRoleAndPerms(Integer id);
+
+    int updateByPrimaryKeySelective(Role record);
 }
