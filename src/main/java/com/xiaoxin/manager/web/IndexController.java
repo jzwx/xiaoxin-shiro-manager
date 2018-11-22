@@ -45,4 +45,9 @@ public class IndexController {
         return "toLogin";
     }
 
+    @RequestMapping("/403")
+    public String toError() {
+        return "/error/403";
+    }
+
 }

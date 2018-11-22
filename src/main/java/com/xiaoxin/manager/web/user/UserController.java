@@ -17,7 +17,9 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
+import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +70,6 @@ public class UserController {
      * @return
      */
     @RequestMapping(value = "login", method = RequestMethod.POST)
-    @RequiresPermissions(value = "usermanage")
     public @ResponseBody ResponseResult login(UserDTO user,
                                               @RequestParam(value = "rememberMe", required = false) boolean rememberMe) {
         LoggerUtil.info(logger, "用户登录，请求参数=user:{0},是否记住我:{1}", user, rememberMe);
@@ -318,6 +319,15 @@ public class UserController {
         LoggerUtil.debug(logger, "删除用户！id:{0}", id);
         String msg = "";
         try {
+//            Subject subject = SecurityUtils.getSubject();
+//            try{
+//                subject.checkPermission("usermanage");
+//            }catch (UnauthorizedException e){
+//                logger.info("错误信息："+e.getMessage());
+//                //TODO 定义错误处理页面
+//                logger.info("权限不足");
+//                return "权限不足";
+//            }
             if (null == id || null == version) {
                 logger.debug("删除用户，结果=请求参数有误，请您稍后再试");
                 return "请求参数有误，请您稍后再试";
@@ -328,8 +338,8 @@ public class UserController {
                 return "您未登录或登录超时，请您登录后再试";
             }
             //删除用户
-            msg = userService.setDelUser(id, 1, existUser.getId(), version);
-            LoggerUtil.info(logger, "删除用户:{0}。userId={1}，操作用户id:{2}", msg, id, existUser.getId());
+//            msg = userService.setDelUser(id, 1, existUser.getId(), version);
+//            LoggerUtil.info(logger, "删除用户:{0}。userId={1}，操作用户id:{2}", msg, id, existUser.getId());
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("删除用户异常！", e);

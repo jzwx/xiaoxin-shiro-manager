@@ -27,7 +27,7 @@ import java.util.Map;
  * @Modified By:
  */
 @Controller
-@RequestMapping("error")
+@RequestMapping("/error")
 public class ErrorHandlerController extends AbstractErrorController {
 
     private ErrorProperties     errorProperties;
@@ -67,27 +67,30 @@ public class ErrorHandlerController extends AbstractErrorController {
         return mv;
     }
 
-    @RequestMapping
-    //设置响应状态码为：200，结合前端约定的规范处理。也可不设置状态码，前端ajax调用使用error函数进行控制处理
-    @ResponseStatus(value = HttpStatus.OK)
-    public @ResponseBody Result<String> error(HttpServletRequest request, Exception e){
-        LoggerUtil.info(logger,"统一异常处理【{0}.error】text/html=普通请求：request={1}",getClass().getName(),request);
-        /** model对象包含了异常信息 */
-        Map<String,Object> model = getErrorAttributes(request,isIncludeStackTrace(request,MediaType.TEXT_HTML));
-        LoggerUtil.info(logger,"统一异常处理【{0} error】统一异常处理：model={1}",getClass().getName(),model);
-        // 1 获取错误状态码（也可以根据异常对象返回对应的错误信息）
-        HttpStatus httpStatus = getStatus(request);
-        LoggerUtil.info(logger,"统一异常处理【{0}.error】统一异常处理!错误状态码httpStatus：{1}",getClass().getName(),httpStatus);
-        // 2 返回错误提示
-        ExceptionEnum ee = getMessage(httpStatus);
-        Result<String> result = new Result<String>(
-                String.valueOf(ee.getType()), ee.getCode(), ee.getMsg());
-        // 3 将错误信息返回
-        LoggerUtil.info(logger,"统一异常处理【{0}.error】统一异常处理!错误信息result：{1}",getClass().getName(),result);
-
-        return result;
-    }
-
+    //    @RequestMapping
+    //    //设置响应状态码为：200，结合前端约定的规范处理。也可不设置状态码，前端ajax调用使用error函数进行控制处理
+    //    @ResponseStatus(value = HttpStatus.OK)
+    //    public @ResponseBody Result<String> error(HttpServletRequest request, Exception e) {
+    //        LoggerUtil.info(logger, "统一异常处理【{0}.error】text/html=普通请求：request={1}", getClass().getName(),
+    //            request);
+    //        /** model对象包含了异常信息 */
+    //        Map<String, Object> model = getErrorAttributes(request,
+    //            isIncludeStackTrace(request, MediaType.TEXT_HTML));
+    //        LoggerUtil.info(logger, "统一异常处理【{0} error】统一异常处理：model={1}", getClass().getName(), model);
+    //        // 1 获取错误状态码（也可以根据异常对象返回对应的错误信息）
+    //        HttpStatus httpStatus = getStatus(request);
+    //        LoggerUtil.info(logger, "统一异常处理【{0}.error】统一异常处理!错误状态码httpStatus：{1}", getClass().getName(),
+    //            httpStatus);
+    //        // 2 返回错误提示
+    //        ExceptionEnum ee = getMessage(httpStatus);
+    //        Result<String> result = new Result<String>(String.valueOf(ee.getType()), ee.getCode(),
+    //            ee.getMsg());
+    //        // 3 将错误信息返回
+    //        LoggerUtil.info(logger, "统一异常处理【{0}.error】统一异常处理!错误信息result：{1}", getClass().getName(),
+    //            result);
+    //
+    //        return result;
+    //    }
 
     @Override
     public String getErrorPath() {
@@ -118,16 +121,16 @@ public class ErrorHandlerController extends AbstractErrorController {
     private ExceptionEnum getMessage(HttpStatus httpStatus) {
         if (httpStatus.is4xxClientError()) {
             // 4开头的错误状态码
-            if ("400".equals(HttpStatus.BAD_REQUEST)) {
+            if ("400".equals(String.valueOf(HttpStatus.BAD_REQUEST))) {
                 return ExceptionEnum.BAD_REQUEST;
-            } else if ("403".equals(HttpStatus.FORBIDDEN)) {
+            } else if ("403".equals(String.valueOf(HttpStatus.FORBIDDEN))) {
                 return ExceptionEnum.BAD_REQUEST;
-            } else if ("404".equals(HttpStatus.NOT_FOUND)) {
+            } else if ("404".equals(String.valueOf(HttpStatus.NOT_FOUND))) {
                 return ExceptionEnum.NOT_FOUND;
             }
         } else if (httpStatus.is5xxServerError()) {
             // 5开头的错误状态码
-            if ("500".equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+            if ("500".equals(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR))) {
                 return ExceptionEnum.SERVER_EPT;
             }
         }
