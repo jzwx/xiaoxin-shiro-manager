@@ -1,19 +1,29 @@
 package com.xiaoxin.manager.web.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.xiaoxin.manager.common.utils.IStatusMessage;
 import com.xiaoxin.manager.common.utils.LoggerUtil;
 import com.xiaoxin.manager.common.utils.ResponseResult;
 import com.xiaoxin.manager.entity.UserDTO;
 import com.xiaoxin.manager.entity.UserRolesVO;
 import com.xiaoxin.manager.entity.UserSearchDTO;
+import com.xiaoxin.manager.pojo.Permission;
+import com.xiaoxin.manager.pojo.PermissionExt;
 import com.xiaoxin.manager.pojo.Role;
 import com.xiaoxin.manager.pojo.User;
 import com.xiaoxin.manager.service.AuthService;
 import com.xiaoxin.manager.service.UserService;
+import com.xiaoxin.manager.utils.ExportExcelUtil;
+import com.xiaoxin.manager.utils.ExportExcelWrapper;
 import com.xiaoxin.manager.utils.PageDataResult;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
@@ -21,18 +31,23 @@ import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.HashMap;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author:jzwx
@@ -53,6 +68,9 @@ public class UserController {
 
     @Autowired
     private AuthService         authService;
+
+    @Autowired
+    private ModelMapper         modelMapper;
 
     /**
      * 用户管理列表页
@@ -110,7 +128,7 @@ public class UserController {
 
             // 2.Subject调用login
             Subject subject = SecurityUtils.getSubject();
-            ;
+            //
             // 在调用了login方法后,SecurityManager会收到AuthenticationToken,并将其发送给已配置的Realm执行必须的认证检查
             // 每个Realm 都能在必要时对提交的AuthenticationTokens作出反应
             // 所以这一步在调用login(token)方法时,它会走到MyRealm.doGetAuthenticationInfo()方法中,具体验证方式详见此方法
@@ -319,15 +337,15 @@ public class UserController {
         LoggerUtil.debug(logger, "删除用户！id:{0}", id);
         String msg = "";
         try {
-//            Subject subject = SecurityUtils.getSubject();
-//            try{
-//                subject.checkPermission("usermanage");
-//            }catch (UnauthorizedException e){
-//                logger.info("错误信息："+e.getMessage());
-//                //TODO 定义错误处理页面
-//                logger.info("权限不足");
-//                return "权限不足";
-//            }
+            //            Subject subject = SecurityUtils.getSubject();
+            //            try{
+            //                subject.checkPermission("usermanage");
+            //            }catch (UnauthorizedException e){
+            //                logger.info("错误信息："+e.getMessage());
+            //                //TODO 定义错误处理页面
+            //                logger.info("权限不足");
+            //                return "权限不足";
+            //            }
             if (null == id || null == version) {
                 logger.debug("删除用户，结果=请求参数有误，请您稍后再试");
                 return "请求参数有误，请您稍后再试";
@@ -338,8 +356,8 @@ public class UserController {
                 return "您未登录或登录超时，请您登录后再试";
             }
             //删除用户
-//            msg = userService.setDelUser(id, 1, existUser.getId(), version);
-//            LoggerUtil.info(logger, "删除用户:{0}。userId={1}，操作用户id:{2}", msg, id, existUser.getId());
+            //            msg = userService.setDelUser(id, 1, existUser.getId(), version);
+            //            LoggerUtil.info(logger, "删除用户:{0}。userId={1}，操作用户id:{2}", msg, id, existUser.getId());
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("删除用户异常！", e);
@@ -377,5 +395,95 @@ public class UserController {
             msg = "操作异常，请您稍后再试";
         }
         return msg;
+    }
+
+    @RequestMapping(value = "/downloadAllClassmateData", method = RequestMethod.GET)
+    public void downloadAllClassmate(HttpServletRequest request,
+                                     HttpServletResponse response) throws IOException,
+                                                                   DocumentException {
+        // 告诉浏览器用什么软件可以打开此文件
+        response.setHeader("content-Type", "application/pdf");
+        // 下载文件的默认名称
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        String fileName = "Classmate-" + new Date().getTime() + ".pdf";
+        response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+        //设置中文
+        BaseFont bfChinese = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H",
+            BaseFont.NOT_EMBEDDED);
+        Font FontChinese = new Font(bfChinese, 12, Font.NORMAL);
+
+        Document document = new Document(PageSize.A1, 10, 10, 10, 0);
+        PdfWriter.getInstance(document, response.getOutputStream());
+        document.open();
+        document.addTitle("同学信息表");
+        //表头
+        PdfPTable tableS = new PdfPTable(11);
+        tableS.setHorizontalAlignment(0);
+        tableS.setTotalWidth(880);
+        tableS.setLockedWidth(true);
+        float[] widths = new float[] { 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80 };//三列列宽不同若果是浮点数需要加f
+        tableS.setWidths(widths);
+
+        tableS.addCell(new Paragraph("id", FontChinese));
+        tableS.addCell(new Paragraph("菜单名称", FontChinese));
+        tableS.addCell(new Paragraph("父菜单id", FontChinese));
+        tableS.addCell(new Paragraph("菜单排序", FontChinese));
+        tableS.addCell(new Paragraph("权限分类（0 菜单；1 功能）", FontChinese));
+        tableS.addCell(new Paragraph("描述", FontChinese));
+        tableS.addCell(new Paragraph("菜单编号", FontChinese));
+        tableS.addCell(new Paragraph("菜单图标名称", FontChinese));
+        tableS.addCell(new Paragraph("菜单url", FontChinese));
+        tableS.addCell(new Paragraph("添加时间", FontChinese));
+        tableS.addCell(new Paragraph("更新时间", FontChinese));
+
+        document.add(tableS);
+        List<Permission> permList = authService.permList();
+        for (Permission permission : permList) {
+            PdfPTable table = new PdfPTable(11);
+            table.setHorizontalAlignment(0);
+            table.setTotalWidth(880);
+            table.setLockedWidth(true);
+            float[] widths2 = new float[] { 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80 };//三列列宽不同若果是浮点数需要加f
+            table.setWidths(widths2);
+
+            table.addCell(new Paragraph(String.valueOf(permission.getId()), FontChinese));
+            table.addCell(new Paragraph(permission.getName(), FontChinese));
+            table.addCell(new Paragraph(String.valueOf(permission.getPid()), FontChinese));
+            table.addCell(new Paragraph(String.valueOf(permission.getZindex()), FontChinese));
+            table.addCell(new Paragraph(String.valueOf(permission.getIstype()), FontChinese));
+            table.addCell(new Paragraph(permission.getDescpt(), FontChinese));
+            table.addCell(new Paragraph(permission.getCode(), FontChinese));
+            table.addCell(new Paragraph(permission.getIcon(), FontChinese));
+            table.addCell(new Paragraph(permission.getPage(), FontChinese));
+            table.addCell(new Paragraph(
+                String.valueOf(dateFormat.format(permission.getInsertTime())), FontChinese));
+            table.addCell(new Paragraph(
+                String.valueOf(dateFormat.format(permission.getUpdateTime())), FontChinese));
+            document.add(table);
+        }
+        document.close();
+    }
+
+    @RequestMapping(value = "/get/excel", method = RequestMethod.GET)
+    public void getExcel(HttpServletRequest request,
+                         HttpServletResponse response) throws Exception {
+        List<Permission> permList = authService.permList();
+        List<PermissionExt> permissionExts = new ArrayList<PermissionExt>();
+        if (CollectionUtils.isNotEmpty(permList)) {
+            permList.stream().forEach(permission -> {
+                PermissionExt permissionExt = modelMapper.map(permission,PermissionExt.class);
+                permissionExts.add(permissionExt);
+            });
+
+            String[] columnNames = { "id", "菜单名称", "父菜单id", "菜单排序", "权限分类（0 菜单；1 功能）", "描述", "菜单编号",
+                                     "菜单图标名称", "菜单url", "添加时间", "更新时间" };
+            String fileName = "excel1";
+            ExportExcelWrapper<PermissionExt> util = new ExportExcelWrapper<PermissionExt>();
+            //            util.exportExcel(fileName, fileName, columnNames, permList, response,
+            //                ExportExcelUtil.EXCEL_FILE_2003);
+
+            util.exportExcel(fileName, fileName, columnNames, permissionExts, response,
+                ExportExcelUtil.EXCEl_FILE_2007);
+        }
     }
 }

@@ -241,6 +241,7 @@ function addUser(){
         }
     });
 }
+
 function openUser(id,title){
 	if(id==null || id==""){
         $("#id").val("");
