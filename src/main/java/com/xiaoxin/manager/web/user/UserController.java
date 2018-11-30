@@ -103,7 +103,6 @@ public class UserController {
             LoggerUtil.info(logger, "用户登录，结果=responseResult:{0}" + responseResult);
             return responseResult;
         }
-
         //用户是否存在
         User existUser = this.userService.findUserByUsername(user.getUsername());
 
